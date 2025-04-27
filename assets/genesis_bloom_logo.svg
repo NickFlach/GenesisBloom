@@ -1,0 +1,71 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="95" fill="none" stroke="#4CAF50" stroke-width="2" />
+  
+  <!-- Spiral Pattern representing the "bloom" concept -->
+  <path d="M100,20 
+           C150,20 170,50 170,100 
+           C170,150 150,180 100,180 
+           C50,180 30,150 30,100 
+           C30,50 50,20 100,20" 
+        fill="none" stroke="#4CAF50" stroke-width="1.5" />
+  
+  <!-- Nested spiral patterns -->
+  <path d="M100,40 
+           C140,40 150,60 150,100 
+           C150,140 140,160 100,160 
+           C60,160 50,140 50,100 
+           C50,60 60,40 100,40" 
+        fill="none" stroke="#66BB6A" stroke-width="1.5" />
+        
+  <path d="M100,60 
+           C130,60 130,70 130,100 
+           C130,130 130,140 100,140 
+           C70,140 70,130 70,100 
+           C70,70 70,60 100,60" 
+        fill="none" stroke="#81C784" stroke-width="1.5" />
+  
+  <!-- Central flower/bloom pattern -->
+  <g transform="translate(100,100)">
+    <!-- Flower petals -->
+    <path d="M0,-25 C10,-15 10,15 0,25 C-10,15 -10,-15 0,-25" fill="#A5D6A7" />
+    <path d="M0,-25 C10,-15 10,15 0,25 C-10,15 -10,-15 0,-25" fill="#A5D6A7" transform="rotate(45)" />
+    <path d="M0,-25 C10,-15 10,15 0,25 C-10,15 -10,-15 0,-25" fill="#A5D6A7" transform="rotate(90)" />
+    <path d="M0,-25 C10,-15 10,15 0,25 C-10,15 -10,-15 0,-25" fill="#A5D6A7" transform="rotate(135)" />
+    <path d="M0,-25 C10,-15 10,15 0,25 C-10,15 -10,-15 0,-25" fill="#A5D6A7" transform="rotate(180)" />
+    <path d="M0,-25 C10,-15 10,15 0,25 C-10,15 -10,-15 0,-25" fill="#A5D6A7" transform="rotate(225)" />
+    <path d="M0,-25 C10,-15 10,15 0,25 C-10,15 -10,-15 0,-25" fill="#A5D6A7" transform="rotate(270)" />
+    <path d="M0,-25 C10,-15 10,15 0,25 C-10,15 -10,-15 0,-25" fill="#A5D6A7" transform="rotate(315)" />
+    
+    <!-- Center circle -->
+    <circle cx="0" cy="0" r="10" fill="#4CAF50" />
+  </g>
+  
+  <!-- Connection lines representing network -->
+  <g stroke="#4CAF50" stroke-width="0.7" opacity="0.7">
+    <line x1="100" y1="100" x2="30" y2="50" />
+    <line x1="100" y1="100" x2="170" y2="50" />
+    <line x1="100" y1="100" x2="50" y2="170" />
+    <line x1="100" y1="100" x2="150" y2="170" />
+    <line x1="100" y1="100" x2="40" y2="120" />
+    <line x1="100" y1="100" x2="160" y2="120" />
+    <line x1="100" y1="100" x2="60" y2="30" />
+    <line x1="100" y1="100" x2="140" y2="30" />
+    <line x1="100" y1="100" x2="190" y2="100" />
+    <line x1="100" y1="100" x2="10" y2="100" />
+  </g>
+  
+  <!-- Small nodes at the connection endpoints -->
+  <g fill="#4CAF50">
+    <circle cx="30" cy="50" r="3" />
+    <circle cx="170" cy="50" r="3" />
+    <circle cx="50" cy="170" r="3" />
+    <circle cx="150" cy="170" r="3" />
+    <circle cx="40" cy="120" r="3" />
+    <circle cx="160" cy="120" r="3" />
+    <circle cx="60" cy="30" r="3" />
+    <circle cx="140" cy="30" r="3" />
+    <circle cx="190" cy="100" r="3" />
+    <circle cx="10" cy="100" r="3" />
+  </g>
+</svg>
