@@ -12,7 +12,7 @@ def display():
     st.markdown("""
     This simulation demonstrates how the components of Genesis Bloom interact in various scenarios.
     Observe how information flows through the system, how resources are allocated, and how the network
-    responds to different challenges.
+    responds to different challenges. The simulation will also generate practical use cases based on the results.
     """)
     
     # Simulation explanation
@@ -172,6 +172,10 @@ def display():
 def run_simulation(scenario, speed_factor, viz_placeholder, status_placeholder, metrics_placeholder):
     """Run the interactive simulation based on the selected scenario"""
     
+    # Create placeholder for use cases
+    if "use_cases_placeholder" not in st.session_state:
+        st.session_state.use_cases_placeholder = st.empty()
+    
     # Simulation parameters based on scenario
     params = {
         "Normal Operation": {
@@ -269,6 +273,10 @@ def run_simulation(scenario, speed_factor, viz_placeholder, status_placeholder, 
         
         # Final metrics
         display_metrics(metrics_history, metrics_placeholder)
+        
+        # Generate and display use cases
+        use_cases = generate_use_cases(scenario, G, node_status, node_resources, metrics_history)
+        st.session_state.use_cases_placeholder.markdown(use_cases)
 
 
 def initialize_network():
@@ -645,7 +653,7 @@ def get_status_message(scenario, step, metrics):
         elif step < 70:
             message += "Governance processes maintaining system integrity and adaptation."
         else:
-            message += "Long-term operational patterns demonstrating system stability."
+            message += "Long-term operational patterns demonstrating system stability. Use cases are being generated."
     
     elif scenario == "Resource Scarcity Event":
         if step < 10:
@@ -657,7 +665,7 @@ def get_status_message(scenario, step, metrics):
         elif step < 70:
             message += "SpiralDAO activating emergency resource protocols."
         else:
-            message += "System adapting to sustained resource constraints."
+            message += "System adapting to sustained resource constraints. Use cases are being generated."
     
     elif scenario == "Node Failure":
         if step < 10:
@@ -669,7 +677,7 @@ def get_status_message(scenario, step, metrics):
         elif step < 70:
             message += "Self-healing protocols activating to restore network integrity."
         else:
-            message += "Network adaptation stabilizing after significant node failures."
+            message += "Network adaptation stabilizing after significant node failures. Use cases are being generated."
     
     elif scenario == "Governance Challenge":
         if step < 10:
@@ -681,6 +689,112 @@ def get_status_message(scenario, step, metrics):
         elif step < 70:
             message += "Consensus-building processes activating across all layers."
         else:
-            message += "Governance resolution pathways stabilizing as consensus emerges."
+            message += "Governance resolution pathways stabilizing as consensus emerges. Use cases are being generated."
     
     return message
+
+
+def generate_use_cases(scenario, G, node_status, node_resources, metrics_history):
+    """Generate practical use cases based on simulation results"""
+    
+    # Get final metrics
+    if metrics_history["steps"]:
+        final_step = max(metrics_history["steps"])
+        health_percent = metrics_history["healthy_nodes"][metrics_history["steps"].index(final_step)]
+        total_resources = metrics_history["total_resources"][metrics_history["steps"].index(final_step)]
+        information_flow = metrics_history["information_flow"][metrics_history["steps"].index(final_step)]
+        governance_consensus = metrics_history["governance_consensus"][metrics_history["steps"].index(final_step)]
+    else:
+        return "Run a simulation to generate use cases."
+    
+    markdown = "## Real-World Use Cases\n\n"
+    markdown += "Based on this simulation, here are practical applications where Genesis Bloom could address real-world challenges:\n\n"
+    
+    # Scenario-specific use cases
+    if scenario == "Normal Operation":
+        markdown += "### Healthy System Applications\n\n"
+        
+        markdown += "**1. Community Energy Grid**\n"
+        markdown += "- **Challenge:** Traditional energy grids are centralized, brittle, and inefficient\n"
+        markdown += "- **Genesis Bloom Solution:** A neighborhood-level energy sharing network where excess solar power is automatically traded between homes\n"
+        markdown += "- **Components Used:** NovaChain tracks energy credits, Resource Mesh optimizes distribution, PSI Nodes represent individual homes\n\n"
+        
+        markdown += "**2. Learning Ecosystem Platform**\n"
+        markdown += "- **Challenge:** Educational resources are unevenly distributed and often paywalled\n"
+        markdown += "- **Genesis Bloom Solution:** Global knowledge-sharing platform that connects teachers, students and resources dynamically\n"
+        markdown += "- **Components Used:** BloomKernel matches learning needs with resources, SpiralDAO ensures quality standards, Sentinel Layer prevents manipulation\n\n"
+    
+    elif scenario == "Resource Scarcity Event":
+        markdown += "### Resource Optimization Applications\n\n"
+        
+        markdown += "**1. Drought Response System**\n"
+        markdown += "- **Challenge:** Water scarcity affecting multiple communities with competing needs\n"
+        markdown += "- **Genesis Bloom Solution:** Intelligent water allocation system that adapts to changing conditions while ensuring basic needs are met\n"
+        markdown += "- **Components Used:** Resource Mesh tracks water availability, BloomKernel models optimal usage, SpiralDAO governs allocation priorities\n\n"
+        
+        markdown += "**2. Supply Chain Resilience Network**\n"
+        markdown += "- **Challenge:** Disruptions in global supply chains causing critical shortages\n"
+        markdown += "- **Genesis Bloom Solution:** Adaptive supply network that reroutes resources based on need, finds alternatives, and distributes fairly\n"
+        markdown += "- **Components Used:** NovaChain verifies resource transfers, PSI Nodes represent participating businesses, Sentinel Layer prevents hoarding\n\n"
+    
+    elif scenario == "Node Failure":
+        markdown += "### Resilience Applications\n\n"
+        
+        markdown += "**1. Disaster Response Coordination**\n"
+        markdown += "- **Challenge:** Communication breakdowns during natural disasters hamper rescue efforts\n"
+        markdown += "- **Genesis Bloom Solution:** Mesh network that maintains critical communications even when infrastructure fails\n"
+        markdown += "- **Components Used:** Root Layer provides local connectivity, Sentinel Layer prioritizes emergency communications, Resource Mesh allocates aid\n\n"
+        
+        markdown += "**2. Cyber-Resilient Financial System**\n"
+        markdown += "- **Challenge:** Centralized financial systems vulnerable to attacks and technical failures\n"
+        markdown += "- **Genesis Bloom Solution:** Distributed financial network that maintains integrity even when multiple nodes are compromised\n"
+        markdown += "- **Components Used:** NovaChain provides transaction verification, PSI Nodes protect individual accounts, Sentinel Layer detects attack patterns\n\n"
+    
+    elif scenario == "Governance Challenge":
+        markdown += "### Collaborative Decision-Making Applications\n\n"
+        
+        markdown += "**1. Urban Planning Platform**\n"
+        markdown += "- **Challenge:** City development decisions often fail to represent diverse resident needs\n"
+        markdown += "- **Genesis Bloom Solution:** Participatory urban planning system that balances competing interests and models outcomes\n"
+        markdown += "- **Components Used:** SpiralDAO enables nested decision-making from neighborhood to city level, BloomKernel simulates impacts, PSI Nodes protect privacy\n\n"
+        
+        markdown += "**2. Global Commons Management**\n"
+        markdown += "- **Challenge:** Resources like oceans and atmosphere lack effective governance mechanisms\n"
+        markdown += "- **Genesis Bloom Solution:** Transparent, participatory system for governing shared resources across jurisdictions\n"
+        markdown += "- **Components Used:** Ouroboros Layer provides ethical frameworks, NovaChain tracks agreements, Sentinel Layer monitors compliance\n\n"
+    
+    # Add impact assessment based on simulation metrics
+    markdown += "### Impact Assessment\n\n"
+    markdown += f"Based on simulation metrics, these applications would likely achieve:\n\n"
+    
+    if health_percent > 80:
+        markdown += "✓ **High System Reliability:** {0:.1f}% uptime even under adverse conditions\n".format(health_percent)
+    elif health_percent > 60:
+        markdown += "✓ **Moderate System Reliability:** {0:.1f}% functionality maintained during challenges\n".format(health_percent)
+    else:
+        markdown += "⚠ **Resilient but Degraded Performance:** System maintains {0:.1f}% functionality during severe disruptions\n".format(health_percent)
+    
+    if information_flow > 70:
+        markdown += "✓ **Excellent Information Sharing:** Fast, efficient coordination across components\n"
+    elif information_flow > 50:
+        markdown += "✓ **Good Information Sharing:** Effective communication with occasional delays\n"
+    else:
+        markdown += "⚠ **Basic Information Sharing:** Critical information preserved despite significant constraints\n"
+    
+    if governance_consensus > 70:
+        markdown += "✓ **Strong Consensus Building:** Rapidly converges on effective decisions even with diverse stakeholders\n"
+    elif governance_consensus > 50:
+        markdown += "✓ **Effective Governance:** Reaches acceptable compromises on most issues\n"
+    else:
+        markdown += "⚠ **Challenging Governance Conditions:** Basic decision-making maintained in difficult circumstances\n"
+    
+    # Add implementation considerations
+    markdown += "\n### Implementation Considerations\n\n"
+    markdown += "To implement these use cases, consider:\n\n"
+    markdown += "1. **Start Small:** Begin with limited-scope pilots before scaling\n"
+    markdown += "2. **Community Engagement:** Involve stakeholders from the beginning to ensure adoption\n"
+    markdown += "3. **Technical Infrastructure:** Evaluate local connectivity and hardware requirements\n"
+    markdown += "4. **Governance Design:** Carefully structure initial decision-making processes\n"
+    markdown += "5. **Phased Deployment:** Implement core components first, then add advanced features\n"
+    
+    return markdown
