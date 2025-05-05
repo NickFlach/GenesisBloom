@@ -258,22 +258,34 @@ def create_component_visualization():
         angle = 2 * np.pi * i / len(nodes)
         pos[node] = (radius * np.cos(angle), radius * np.sin(angle))
     
-    # Create edges
+    # Create edges with individual traces for each edge to maintain proper hover text
+    edge_traces = []
+    
     for source, target, label in relationships:
         x0, y0 = pos[source]
         x1, y1 = pos[target]
-        edge_x.extend([x0, x1, None])
-        edge_y.extend([y0, y1, None])
-        # Add edge label at midpoint
-        edge_text.append(f"{source} → {target}: {label}")
+        
+        # Create a trace for this edge
+        edge_trace = go.Scatter(
+            x=[x0, x1, None],
+            y=[y0, y1, None],
+            line=dict(width=1.5, color='#888'),
+            hoverinfo='text',
+            text=f"{source} → {target}: {label}",
+            mode='lines',
+            showlegend=False
+        )
+        
+        edge_traces.append(edge_trace)
     
-    edge_trace = go.Scatter(
-        x=edge_x, y=edge_y,
+    # Create a dummy trace for the legend
+    edge_legend_trace = go.Scatter(
+        x=[None],
+        y=[None],
         line=dict(width=1.5, color='#888'),
-        hoverinfo='text',
-        text=edge_text,
         mode='lines',
-        name="Relationships"
+        name="Relationships",
+        showlegend=True
     )
     
     # Create nodes
@@ -295,17 +307,33 @@ def create_component_visualization():
         name="Components"
     )
     
-    # Create the figure
-    fig = go.Figure(data=[edge_trace, node_trace],
-                   layout=go.Layout(
-                       title='Genesis Bloom Component Relationships',
-                       titlefont_size=16,
-                       showlegend=False,
-                       hovermode='closest',
-                       margin=dict(b=20,l=5,r=5,t=40),
-                       xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                       yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                       height=600,
-                   ))
+    # Create the figure with all traces
+    # First add all edge traces, then the legend trace for edges, then the node trace
+    fig = go.Figure()
+    
+    # Add all edge traces
+    for trace in edge_traces:
+        fig.add_trace(trace)
+    
+    # Add the legend trace for relationships
+    fig.add_trace(edge_legend_trace)
+    
+    # Add the node trace
+    fig.add_trace(node_trace)
+    
+    # Set the layout
+    fig.update_layout(
+        title=dict(
+            text='Genesis Bloom Component Relationships',
+            font=dict(size=16)
+        ),
+        showlegend=True,
+        hovermode='closest',
+        margin=dict(b=20,l=5,r=5,t=40),
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        height=600,
+        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01)
+    )
     
     st.plotly_chart(fig, use_container_width=True)
