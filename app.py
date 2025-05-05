@@ -18,7 +18,7 @@ st.set_page_config(
 def main():
     # Sidebar navigation
     st.sidebar.title("Genesis Bloom")
-    st.sidebar.image("assets/genesis_bloom_logo.svg", use_column_width=True)
+    st.sidebar.image("assets/genesis_bloom_logo.svg", use_container_width=True)
     
     st.sidebar.markdown("## Navigation")
     page = st.sidebar.radio(

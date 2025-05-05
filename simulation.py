@@ -331,10 +331,11 @@ def initialize_network():
                 G.nodes[node]["layer"] = "Root"
     
     # Create connections between components based on system architecture
-    for i in range(len(G.nodes())):
+    nodes_list = list(G.nodes())
+    for i in range(len(nodes_list)):
         # Each node connects to 3-5 other nodes
         num_connections = random.randint(3, 5)
-        possible_targets = list(range(len(G.nodes())))
+        possible_targets = list(range(len(nodes_list)))
         possible_targets.remove(i)  # Remove self from targets
         targets = random.sample(possible_targets, min(num_connections, len(possible_targets)))
         
@@ -559,7 +560,7 @@ def visualize_network(G, node_status, node_resources, placeholder):
     fig.update_layout(
         showlegend=False,
         hovermode='closest',
-        margin=dict(b=10,l=10,r=10,t=10),
+        margin=dict(b=10, l=10, r=10, t=10),
         xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-1.2, 1.2]),
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[0.8, 3.2]),
         height=600,
@@ -623,7 +624,7 @@ def display_metrics(metrics_history, placeholder):
     
     # Update layout
     fig.update_layout(
-        title='System Metrics Over Time',
+        title=dict(text='System Metrics Over Time'),
         xaxis_title='Simulation Step',
         yaxis_title='Value',
         legend=dict(
