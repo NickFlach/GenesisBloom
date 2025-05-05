@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import time
 import random
 from utils import create_expanding_section
+from database import store_simulation_result, get_all_simulation_results, get_simulation_result
 
 def display():
     st.title("Interactive Genesis Bloom Simulation")
@@ -15,158 +16,162 @@ def display():
     responds to different challenges. The simulation will also generate practical use cases based on the results.
     """)
     
-    # Simulation explanation
-    st.markdown("""
-    ## How This Simulation Works
+    # Create tabs for simulation and history
+    tab1, tab2 = st.tabs(["Run Simulation", "Simulation History"])
     
-    This interactive model represents a simplified version of Genesis Bloom's components and their interactions.
-    Each node represents a different part of the system, and connections show information and resource flows.
-    
-    The simulation demonstrates three key aspects of Genesis Bloom:
-    1. **Network Resilience**: How the system maintains functionality when components fail
-    2. **Resource Allocation**: How resources flow to where they're needed most
-    3. **Collective Intelligence**: How information propagates and leads to system adaptation
-    """)
-    
-    # Simulation controls
-    st.markdown("## Simulation Controls")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        scenario = st.selectbox(
-            "Select scenario:",
-            ["Normal Operation", "Resource Scarcity Event", "Node Failure", "Governance Challenge"]
+    with tab1:
+        # Simulation explanation
+        st.markdown("""
+        ## How This Simulation Works
+        
+        This interactive model represents a simplified version of Genesis Bloom's components and their interactions.
+        Each node represents a different part of the system, and connections show information and resource flows.
+        
+        The simulation demonstrates three key aspects of Genesis Bloom:
+        1. **Network Resilience**: How the system maintains functionality when components fail
+        2. **Resource Allocation**: How resources flow to where they're needed most
+        3. **Collective Intelligence**: How information propagates and leads to system adaptation
+        """)
+        
+        # Simulation controls
+        st.markdown("## Simulation Controls")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            scenario = st.selectbox(
+                "Select scenario:",
+                ["Normal Operation", "Resource Scarcity Event", "Node Failure", "Governance Challenge"]
+            )
+        
+        with col2:
+            speed = st.slider("Simulation Speed", min_value=1, max_value=10, value=5)
+            speed_factor = 0.2 / speed  # Convert to delay time
+        
+        with col3:
+            if "simulation_running" not in st.session_state:
+                st.session_state.simulation_running = False
+                st.session_state.simulation_step = 0
+            
+            if st.button("Start/Reset Simulation"):
+                st.session_state.simulation_running = True
+                st.session_state.simulation_step = 0
+                st.rerun()
+        
+        # Create placeholders for simulation visualization and status
+        simulation_viz = st.empty()
+        simulation_status = st.empty()
+        simulation_metrics = st.empty()
+        
+        # Run simulation if active
+        if st.session_state.simulation_running:
+            run_simulation(scenario, speed_factor, simulation_viz, simulation_status, simulation_metrics)
+        else:
+            simulation_status.info("Click 'Start Simulation' to begin the demonstration")
+        
+        # Additional explanation based on scenario
+        st.markdown("## Scenario Details")
+        
+        scenario_details = {
+            "Normal Operation": """
+                Under normal operating conditions, Genesis Bloom demonstrates:
+                
+                - Regular information flow between all system components
+                - Balanced resource distribution according to needs
+                - Continuous low-level adaptation and learning
+                - Stable governance processes with distributed decision-making
+                
+                This represents the baseline functioning of the system when no significant
+                challenges or disruptions are present.
+            """,
+            "Resource Scarcity Event": """
+                During a resource scarcity event, Genesis Bloom activates:
+                
+                - Need detection through PSI Nodes and Harmonic Resource Mesh
+                - BloomKernel AI optimization to identify efficient resource allocation
+                - SpiralDAO emergency prioritization protocols
+                - Chain of Trust verification of all resource transfers
+                - Sentinel Layer monitoring for resource capture or hoarding
+                
+                This scenario demonstrates how the system ensures basic needs are met
+                even when total resources are constrained.
+            """,
+            "Node Failure": """
+                When nodes fail or become compromised, Genesis Bloom demonstrates:
+                
+                - Automatic detection of failures through heartbeat protocols
+                - Rerouting of network traffic around damaged nodes
+                - Resource reallocation to compensate for lost capacity
+                - Sentinel Layer investigation of potential attacks
+                - Self-healing protocols to repair or replace damaged components
+                
+                This scenario demonstrates the system's resilience in the face of
+                both accidental failures and deliberate attacks.
+            """,
+            "Governance Challenge": """
+                During governance challenges such as contentious decisions, Genesis Bloom activates:
+                
+                - SpiralDAO deliberation processes with increased participation
+                - Sentinel Layer monitoring for manipulation or capture attempts
+                - BloomKernel AI modeling of various outcome scenarios
+                - PSI Node representation of diverse perspectives
+                - Ouroboros Layer ethical review of decision processes
+                
+                This scenario demonstrates how the system handles complex governance
+                situations that involve competing values or interests.
+            """
+        }
+        
+        st.markdown(scenario_details[scenario])
+        
+        # Educational insights from the simulation
+        st.markdown("## Key Insights from This Simulation")
+        
+        create_expanding_section(
+            "Emergent Intelligence",
+            """
+            The simulation demonstrates how intelligence emerges from the interactions of simpler components.
+            No single node contains the complete "intelligence" of Genesis Bloom; rather, it emerges from:
+            
+            - Pattern recognition across distributed data sources
+            - Feedback loops between sensing and action
+            - Multi-level processing from local to global
+            - Evolutionary selection of successful adaptations
+            
+            This emergent intelligence allows the system to respond to novel situations without
+            requiring explicit programming for every possible scenario.
+            """
         )
-    
-    with col2:
-        speed = st.slider("Simulation Speed", min_value=1, max_value=10, value=5)
-        speed_factor = 0.2 / speed  # Convert to delay time
-    
-    with col3:
-        if "simulation_running" not in st.session_state:
-            st.session_state.simulation_running = False
-            st.session_state.simulation_step = 0
         
-        if st.button("Start/Reset Simulation"):
-            st.session_state.simulation_running = True
-            st.session_state.simulation_step = 0
-            st.rerun()
-    
-    # Create placeholders for simulation visualization and status
-    simulation_viz = st.empty()
-    simulation_status = st.empty()
-    simulation_metrics = st.empty()
-    
-    # Run simulation if active
-    if st.session_state.simulation_running:
-        run_simulation(scenario, speed_factor, simulation_viz, simulation_status, simulation_metrics)
-    else:
-        simulation_status.info("Click 'Start Simulation' to begin the demonstration")
-    
-    # Additional explanation based on scenario
-    st.markdown("## Scenario Details")
-    
-    scenario_details = {
-        "Normal Operation": """
-            Under normal operating conditions, Genesis Bloom demonstrates:
+        create_expanding_section(
+            "Resilience Through Redundancy",
+            """
+            Genesis Bloom's resilience comes from strategic redundancy:
             
-            - Regular information flow between all system components
-            - Balanced resource distribution according to needs
-            - Continuous low-level adaptation and learning
-            - Stable governance processes with distributed decision-making
+            - Multiple nodes can perform similar functions
+            - Information is stored across distributed locations
+            - Decision-making processes have multiple pathways
+            - Resources can flow through alternative routes
             
-            This represents the baseline functioning of the system when no significant
-            challenges or disruptions are present.
-        """,
-        "Resource Scarcity Event": """
-            During a resource scarcity event, Genesis Bloom activates:
-            
-            - Need detection through PSI Nodes and Harmonic Resource Mesh
-            - BloomKernel AI optimization to identify efficient resource allocation
-            - SpiralDAO emergency prioritization protocols
-            - Chain of Trust verification of all resource transfers
-            - Sentinel Layer monitoring for resource capture or hoarding
-            
-            This scenario demonstrates how the system ensures basic needs are met
-            even when total resources are constrained.
-        """,
-        "Node Failure": """
-            When nodes fail or become compromised, Genesis Bloom demonstrates:
-            
-            - Automatic detection of failures through heartbeat protocols
-            - Rerouting of network traffic around damaged nodes
-            - Resource reallocation to compensate for lost capacity
-            - Sentinel Layer investigation of potential attacks
-            - Self-healing protocols to repair or replace damaged components
-            
-            This scenario demonstrates the system's resilience in the face of
-            both accidental failures and deliberate attacks.
-        """,
-        "Governance Challenge": """
-            During governance challenges such as contentious decisions, Genesis Bloom activates:
-            
-            - SpiralDAO deliberation processes with increased participation
-            - Sentinel Layer monitoring for manipulation or capture attempts
-            - BloomKernel AI modeling of various outcome scenarios
-            - PSI Node representation of diverse perspectives
-            - Ouroboros Layer ethical review of decision processes
-            
-            This scenario demonstrates how the system handles complex governance
-            situations that involve competing values or interests.
-        """
-    }
-    
-    st.markdown(scenario_details[scenario])
-    
-    # Educational insights from the simulation
-    st.markdown("## Key Insights from This Simulation")
-    
-    create_expanding_section(
-        "Emergent Intelligence",
-        """
-        The simulation demonstrates how intelligence emerges from the interactions of simpler components.
-        No single node contains the complete "intelligence" of Genesis Bloom; rather, it emerges from:
+            Unlike inefficient redundancy that simply duplicates everything, Genesis Bloom
+            uses strategic redundancy focused on critical functions and likely failure points.
+            """
+        )
         
-        - Pattern recognition across distributed data sources
-        - Feedback loops between sensing and action
-        - Multi-level processing from local to global
-        - Evolutionary selection of successful adaptations
-        
-        This emergent intelligence allows the system to respond to novel situations without
-        requiring explicit programming for every possible scenario.
-        """
-    )
-    
-    create_expanding_section(
-        "Resilience Through Redundancy",
-        """
-        Genesis Bloom's resilience comes from strategic redundancy:
-        
-        - Multiple nodes can perform similar functions
-        - Information is stored across distributed locations
-        - Decision-making processes have multiple pathways
-        - Resources can flow through alternative routes
-        
-        Unlike inefficient redundancy that simply duplicates everything, Genesis Bloom
-        uses strategic redundancy focused on critical functions and likely failure points.
-        """
-    )
-    
-    create_expanding_section(
-        "Balance of Autonomy and Coordination",
-        """
-        The simulation reveals how Genesis Bloom balances local autonomy with global coordination:
-        
-        - Nodes make independent decisions based on local information
-        - Coordination emerges through shared protocols rather than central control
-        - Higher-level patterns influence but don't dictate local actions
-        - System-wide goals are achieved without centralized management
-        
-        This balance allows for both efficient response to local conditions and
-        coherent action at the system level.
-        """
-    )
+        create_expanding_section(
+            "Balance of Autonomy and Coordination",
+            """
+            The simulation reveals how Genesis Bloom balances local autonomy with global coordination:
+            
+            - Nodes make independent decisions based on local information
+            - Coordination emerges through shared protocols rather than central control
+            - Higher-level patterns influence but don't dictate local actions
+            - System-wide goals are achieved without centralized management
+            
+            This balance allows for both efficient response to local conditions and
+            coherent action at the system level.
+            """
+        )
 
 
 def run_simulation(scenario, speed_factor, viz_placeholder, status_placeholder, metrics_placeholder):
@@ -274,9 +279,19 @@ def run_simulation(scenario, speed_factor, viz_placeholder, status_placeholder, 
         # Final metrics
         display_metrics(metrics_history, metrics_placeholder)
         
-        # Generate and display use cases
+        # Generate use cases
         use_cases = generate_use_cases(scenario, G, node_status, node_resources, metrics_history)
         st.session_state.use_cases_placeholder.markdown(use_cases)
+        
+        # Store simulation results in the database
+        simulation_id = store_simulation_result(
+            scenario=scenario,
+            steps=st.session_state.simulation_step,
+            metrics_history=metrics_history,
+            use_cases_markdown=use_cases
+        )
+        if simulation_id:
+            st.success(f"Simulation results saved to database (ID: {simulation_id}).")
 
 
 def initialize_network():
