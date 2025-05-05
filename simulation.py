@@ -509,12 +509,18 @@ def visualize_network(G, node_status, node_resources, placeholder):
         edge_colors.append(f"rgba(150, 150, 150, {min(1.0, flow + 0.2)})")
     
     # Add edge trace
-    fig.add_trace(go.Scatter(
-        x=edge_x, y=edge_y,
-        mode='lines',
-        line=dict(width=1, color=edge_colors),
-        hoverinfo='none'
-    ))
+    for i in range(0, len(edge_x), 4):  # Each edge is 4 points including None
+        if i < len(edge_colors):
+            color = edge_colors[i//4]
+        else:
+            color = 'rgba(150, 150, 150, 0.3)'  # Default color
+        
+        fig.add_trace(go.Scatter(
+            x=edge_x[i:i+4], y=edge_y[i:i+4],
+            mode='lines',
+            line=dict(width=1, color=color),
+            hoverinfo='none'
+        ))
     
     # Add nodes
     node_x = []
