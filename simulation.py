@@ -485,16 +485,12 @@ def visualize_network(G, node_status, node_resources, placeholder):
         
         pos[node] = (x, y)
     
-    # Add edges first so they're in the background
-    edge_x = []
-    edge_y = []
-    edge_colors = []
-    
+    # Create individual edge traces for better visualization
     for edge in G.edges():
         x0, y0 = pos[edge[0]]
         x1, y1 = pos[edge[1]]
         
-        # Calculate resource flow for edge width
+        # Calculate resource flow for visualization
         source_resources = node_resources[edge[0]]
         target_resources = node_resources[edge[1]]
         flow = max(0, (source_resources - target_resources) / 100)
@@ -503,29 +499,37 @@ def visualize_network(G, node_status, node_resources, placeholder):
         if flow < 0.1:
             continue
         
-        # Curved edges for better visualization
+        # Determine source and target node details for hover information
+        source_component = G.nodes[edge[0]]["component_type"]
+        target_component = G.nodes[edge[1]]["component_type"]
+        source_status = node_status[edge[0]]
+        target_status = node_status[edge[1]]
+        
+        # Create curved edges for better visualization
         cx = (x0 + x1) / 2
         cy = (y0 + y1) / 2 + 0.1
         
-        # Add edge with curve using control point
-        edge_x.extend([x0, cx, x1, None])
-        edge_y.extend([y0, cy, y1, None])
+        # Edge color based on flow with proper formatting for Plotly
+        edge_color = f"rgba(150, 150, 150, {min(1.0, flow + 0.2)})"
         
-        # Edge color based on flow
-        edge_colors.append(f"rgba(150, 150, 150, {min(1.0, flow + 0.2)})")
-    
-    # Add edge trace
-    for i in range(0, len(edge_x), 4):  # Each edge is 4 points including None
-        if i < len(edge_colors):
-            color = edge_colors[i//4]
-        else:
-            color = 'rgba(150, 150, 150, 0.3)'  # Default color
+        # Edge width based on flow
+        edge_width = 1 + (flow * 2)
         
+        # Hover text
+        hover_text = f"Flow: {source_component} → {target_component}<br>"
+        hover_text += f"Resource transfer: {int(flow * 10)}<br>"
+        hover_text += f"Source status: {source_status}<br>"
+        hover_text += f"Target status: {target_status}"
+        
+        # Add individual edge trace
         fig.add_trace(go.Scatter(
-            x=edge_x[i:i+4], y=edge_y[i:i+4],
+            x=[x0, cx, x1, None],
+            y=[y0, cy, y1, None],
             mode='lines',
-            line=dict(width=1, color=color),
-            hoverinfo='none'
+            line=dict(width=edge_width, color=edge_color),
+            hoverinfo='text',
+            text=hover_text,
+            showlegend=False
         ))
     
     # Add nodes
@@ -599,44 +603,67 @@ def display_metrics(metrics_history, placeholder):
     if not metrics_history["steps"]:
         return
     
-    # Create a metrics visualization
+    # Create a metrics visualization with improved readability
     fig = go.Figure()
     
+    # Add traces with hover templates to show exact values
     fig.add_trace(go.Scatter(
         x=metrics_history["steps"],
         y=metrics_history["healthy_nodes"],
-        mode='lines',
+        mode='lines+markers',
         name='Healthy Nodes (%)',
-        line=dict(color='rgba(75, 192, 192, 0.8)', width=2)
+        line=dict(color='rgba(75, 192, 192, 0.8)', width=2),
+        marker=dict(size=6, color='rgba(75, 192, 192, 1.0)'),
+        hovertemplate='Step: %{x}<br>Healthy Nodes: %{y:.1f}%<extra></extra>'
     ))
     
     fig.add_trace(go.Scatter(
         x=metrics_history["steps"],
         y=[r/100 for r in metrics_history["total_resources"]],  # Scale for visibility
-        mode='lines',
+        mode='lines+markers',
         name='Resources (÷100)',
-        line=dict(color='rgba(255, 159, 64, 0.8)', width=2)
+        line=dict(color='rgba(255, 159, 64, 0.8)', width=2),
+        marker=dict(size=6, color='rgba(255, 159, 64, 1.0)'),
+        hovertemplate='Step: %{x}<br>Resources: %{y:.1f} × 100<extra></extra>'
     ))
     
     fig.add_trace(go.Scatter(
         x=metrics_history["steps"],
         y=metrics_history["information_flow"],
-        mode='lines',
+        mode='lines+markers',
         name='Information Flow',
-        line=dict(color='rgba(54, 162, 235, 0.8)', width=2)
+        line=dict(color='rgba(54, 162, 235, 0.8)', width=2),
+        marker=dict(size=6, color='rgba(54, 162, 235, 1.0)'),
+        hovertemplate='Step: %{x}<br>Info Flow: %{y:.1f}<extra></extra>'
     ))
     
     fig.add_trace(go.Scatter(
         x=metrics_history["steps"],
         y=metrics_history["governance_consensus"],
-        mode='lines',
+        mode='lines+markers',
         name='Governance Consensus',
-        line=dict(color='rgba(153, 102, 255, 0.8)', width=2)
+        line=dict(color='rgba(153, 102, 255, 0.8)', width=2),
+        marker=dict(size=6, color='rgba(153, 102, 255, 1.0)'),
+        hovertemplate='Step: %{x}<br>Consensus: %{y:.1f}%<extra></extra>'
     ))
     
-    # Update layout
+    # Current step indicator - vertical line at current step
+    current_step = max(metrics_history["steps"]) if metrics_history["steps"] else 0
+    fig.add_vline(
+        x=current_step, 
+        line_width=2, 
+        line_dash="dash", 
+        line_color="rgba(0, 0, 0, 0.5)",
+        annotation_text="Current Step",
+        annotation_position="top right"
+    )
+    
+    # Update layout with improved formatting
     fig.update_layout(
-        title=dict(text='System Metrics Over Time'),
+        title=dict(
+            text='System Metrics Over Time',
+            font=dict(size=18)
+        ),
         xaxis_title='Simulation Step',
         yaxis_title='Value',
         legend=dict(
@@ -644,13 +671,56 @@ def display_metrics(metrics_history, placeholder):
             yanchor="bottom",
             y=1.02,
             xanchor="right",
-            x=1
+            x=1,
+            bgcolor="rgba(255, 255, 255, 0.8)",
+            bordercolor="rgba(0, 0, 0, 0.2)",
+            borderwidth=1
         ),
-        height=300,
-        margin=dict(l=20, r=20, t=40, b=20)
+        height=350,  # Slightly taller for better visibility
+        margin=dict(l=20, r=20, t=60, b=30),
+        hovermode="x unified",  # Show all traces for a given x value
+        plot_bgcolor='rgba(245, 245, 245, 0.5)',  # Light background
+        xaxis=dict(
+            gridcolor='rgba(200, 200, 200, 0.2)',
+            showgrid=True
+        ),
+        yaxis=dict(
+            gridcolor='rgba(200, 200, 200, 0.2)',
+            showgrid=True
+        )
     )
     
+    # Display the chart
     placeholder.plotly_chart(fig, use_container_width=True)
+    
+    # Display the current metrics values as text below the chart
+    if metrics_history["steps"]:
+        last_idx = len(metrics_history["steps"]) - 1
+        col1, col2, col3, col4 = placeholder.columns(4)
+        
+        col1.metric(
+            "Healthy Nodes", 
+            f"{metrics_history['healthy_nodes'][last_idx]:.1f}%",
+            delta=f"{metrics_history['healthy_nodes'][last_idx] - metrics_history['healthy_nodes'][max(0, last_idx-10)]:.1f}%"
+        )
+        
+        col2.metric(
+            "Total Resources", 
+            f"{metrics_history['total_resources'][last_idx]:.0f}",
+            delta=f"{metrics_history['total_resources'][last_idx] - metrics_history['total_resources'][max(0, last_idx-10)]:.0f}"
+        )
+        
+        col3.metric(
+            "Information Flow", 
+            f"{metrics_history['information_flow'][last_idx]:.1f}",
+            delta=f"{metrics_history['information_flow'][last_idx] - metrics_history['information_flow'][max(0, last_idx-10)]:.1f}"
+        )
+        
+        col4.metric(
+            "Governance Consensus", 
+            f"{metrics_history['governance_consensus'][last_idx]:.1f}%",
+            delta=f"{metrics_history['governance_consensus'][last_idx] - metrics_history['governance_consensus'][max(0, last_idx-10)]:.1f}%"
+        )
 
 
 def get_status_message(scenario, step, metrics):
