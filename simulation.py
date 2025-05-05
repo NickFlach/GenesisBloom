@@ -172,6 +172,159 @@ def display():
             coherent action at the system level.
             """
         )
+    
+    with tab2:
+        st.markdown("## Simulation History")
+        st.markdown("""
+        View previously run simulations and their results. This allows you to compare
+        different scenarios and understand how Genesis Bloom responds under various conditions.
+        """)
+        
+        try:
+            # Get all simulations from database
+            simulation_results = get_all_simulation_results()
+            
+            if not simulation_results.empty:
+                # Display results in a dataframe with formatting
+                st.markdown("### Previously Run Simulations")
+                
+                # Format timestamp for better display
+                simulation_results['timestamp'] = pd.to_datetime(simulation_results['timestamp']).dt.strftime('%Y-%m-%d %H:%M')
+                
+                # Round numeric columns for cleaner display
+                for col in ['healthy_nodes', 'information_flow', 'governance_consensus']:
+                    if col in simulation_results.columns:
+                        simulation_results[col] = simulation_results[col].round(1)
+                
+                if 'total_resources' in simulation_results.columns:
+                    simulation_results['total_resources'] = simulation_results['total_resources'].round(0)
+                    
+                # Rename columns for better display
+                display_results = simulation_results.copy()
+                display_results = display_results.rename(columns={
+                    'id': 'ID',
+                    'timestamp': 'Date/Time',
+                    'scenario': 'Scenario',
+                    'steps': 'Steps',
+                    'healthy_nodes': 'Healthy Nodes (%)',
+                    'total_resources': 'Resources',
+                    'information_flow': 'Info Flow',
+                    'governance_consensus': 'Consensus (%)'  
+                })
+                
+                # Display the dataframe of all simulations
+                st.dataframe(display_results, use_container_width=True)
+                
+                # Add a select box for the user to choose a simulation
+                if len(simulation_results) > 0:
+                    selected_sim_id = st.selectbox(
+                        "Select a simulation to view details:",
+                        options=simulation_results['id'].tolist(),
+                        format_func=lambda x: f"ID: {x} - {simulation_results[simulation_results['id'] == x]['scenario'].iloc[0]} ({simulation_results[simulation_results['id'] == x]['timestamp'].iloc[0]})"
+                    )
+                    
+                    # Display the selected simulation details
+                    if selected_sim_id:
+                        selected_sim = get_simulation_result(selected_sim_id)
+                        
+                        if selected_sim:
+                            # Display basic info
+                            st.markdown(f"### Simulation Details: {selected_sim.scenario_type}")
+                            st.markdown(f"**Run Date:** {selected_sim.timestamp.strftime('%Y-%m-%d %H:%M')}")
+                            st.markdown(f"**Steps Completed:** {selected_sim.simulation_steps}")
+                            
+                            # Create metrics display
+                            col1, col2, col3, col4 = st.columns(4)
+                            col1.metric("Healthy Nodes", f"{selected_sim.final_healthy_nodes:.1f}%")
+                            col2.metric("Resources", f"{selected_sim.final_total_resources:.0f}")
+                            col3.metric("Info Flow", f"{selected_sim.final_information_flow:.1f}")
+                            col4.metric("Consensus", f"{selected_sim.final_governance_consensus:.1f}%")
+                            
+                            # Show metrics history chart if available
+                            if selected_sim.metrics_history and 'steps' in selected_sim.metrics_history:
+                                st.markdown("#### Metrics Over Time")
+                                # Create a figure for historical metrics
+                                history_fig = go.Figure()
+                                
+                                # Add traces for each metric
+                                if 'healthy_nodes' in selected_sim.metrics_history:
+                                    history_fig.add_trace(go.Scatter(
+                                        x=selected_sim.metrics_history['steps'],
+                                        y=selected_sim.metrics_history['healthy_nodes'],
+                                        mode='lines',
+                                        name='Healthy Nodes (%)',
+                                        line=dict(color='rgba(75, 192, 192, 0.8)', width=2)
+                                    ))
+                                
+                                if 'total_resources' in selected_sim.metrics_history:
+                                    history_fig.add_trace(go.Scatter(
+                                        x=selected_sim.metrics_history['steps'],
+                                        y=[r/100 for r in selected_sim.metrics_history['total_resources']],
+                                        mode='lines',
+                                        name='Resources (÷100)',
+                                        line=dict(color='rgba(255, 159, 64, 0.8)', width=2)
+                                    ))
+                                
+                                if 'information_flow' in selected_sim.metrics_history:
+                                    history_fig.add_trace(go.Scatter(
+                                        x=selected_sim.metrics_history['steps'],
+                                        y=selected_sim.metrics_history['information_flow'],
+                                        mode='lines',
+                                        name='Information Flow',
+                                        line=dict(color='rgba(54, 162, 235, 0.8)', width=2)
+                                    ))
+                                
+                                if 'governance_consensus' in selected_sim.metrics_history:
+                                    history_fig.add_trace(go.Scatter(
+                                        x=selected_sim.metrics_history['steps'],
+                                        y=selected_sim.metrics_history['governance_consensus'],
+                                        mode='lines',
+                                        name='Governance Consensus',
+                                        line=dict(color='rgba(153, 102, 255, 0.8)', width=2)
+                                    ))
+                                
+                                # Update layout
+                                history_fig.update_layout(
+                                    xaxis_title='Simulation Step',
+                                    yaxis_title='Value',
+                                    legend=dict(
+                                        orientation="h",
+                                        yanchor="bottom",
+                                        y=1.02,
+                                        xanchor="right",
+                                        x=1
+                                    ),
+                                    height=300,
+                                    margin=dict(l=20, r=20, t=20, b=20)
+                                )
+                                
+                                st.plotly_chart(history_fig, use_container_width=True)
+                            
+                            # Display use cases if available
+                            if selected_sim.use_cases:
+                                st.markdown("#### Generated Use Cases")
+                                st.markdown(selected_sim.use_cases)
+                            else:
+                                st.info("No use cases were generated for this simulation.")
+                else:
+                    st.info("No simulations found in the database.")
+            else:
+                st.info("No simulations have been run yet. Go to the 'Run Simulation' tab to create some!")
+                
+        except Exception as e:
+            st.error(f"Error loading simulation history: {str(e)}")
+            st.info("If this persists, the database may need to be initialized or there might be connection issues.")
+            
+            # Add a way to initialize the database if needed
+            if st.button("Initialize Database"):
+                from database import init_db
+                try:
+                    init_db()
+                    st.success("Database initialized successfully! Try running a simulation now.")
+                except Exception as db_error:
+                    st.error(f"Database initialization failed: {str(db_error)}")
+                    st.error("Please check database connection settings and try again.")
+        
 
 
 def run_simulation(scenario, speed_factor, viz_placeholder, status_placeholder, metrics_placeholder):
