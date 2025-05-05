@@ -228,68 +228,143 @@ def create_network_visualization():
             nodes_size.append(size)
             nodes_color.append(color)
     
-    # Create edges between layers (vertical connections)
-    edges_x = []
-    edges_y = []
-    edge_colors = []
+    # Instead of combining all edges, we'll create separate traces for different types of edges
+    # This allows proper coloring and better hover text
     
-    # Connect Root to Bloom
+    # List to store all edge traces
+    edge_traces = []
+    
+    # Connect Root to Bloom (upward connections)
     for i in range(layers["Root Layer"]["count"]):
         root_idx = i
         # Connect to nearest Bloom nodes
         for j in range(2):  # Each Root node connects to 2 Bloom nodes
             bloom_idx = layers["Root Layer"]["count"] + (i + j) % layers["Bloom Layer"]["count"]
             
-            edges_x.extend([nodes_x[root_idx], nodes_x[bloom_idx], None])
-            edges_y.extend([nodes_y[root_idx], nodes_y[bloom_idx], None])
-            edge_colors.append("rgba(150, 150, 150, 0.5)")
+            # Create a trace for this upward connection
+            edge_trace = go.Scatter(
+                x=[nodes_x[root_idx], nodes_x[bloom_idx], None],
+                y=[nodes_y[root_idx], nodes_y[bloom_idx], None],
+                line=dict(width=1.5, color='rgba(150, 150, 150, 0.7)'),
+                hoverinfo='text',
+                text=f"Root→Bloom: Information flow from local to regional",
+                mode='lines',
+                showlegend=False
+            )
+            edge_traces.append(edge_trace)
     
-    # Connect Bloom to Ouroboros
+    # Connect Bloom to Ouroboros (upward connections)
     for i in range(layers["Bloom Layer"]["count"]):
         bloom_idx = layers["Root Layer"]["count"] + i
         # Connect to nearest Ouroboros nodes
         ouro_idx = layers["Root Layer"]["count"] + layers["Bloom Layer"]["count"] + (i % layers["Ouroboros Layer"]["count"])
         
-        edges_x.extend([nodes_x[bloom_idx], nodes_x[ouro_idx], None])
-        edges_y.extend([nodes_y[bloom_idx], nodes_y[ouro_idx], None])
-        edge_colors.append("rgba(150, 150, 150, 0.5)")
+        # Create a trace for this upward connection
+        edge_trace = go.Scatter(
+            x=[nodes_x[bloom_idx], nodes_x[ouro_idx], None],
+            y=[nodes_y[bloom_idx], nodes_y[ouro_idx], None],
+            line=dict(width=1.5, color='rgba(150, 150, 150, 0.7)'),
+            hoverinfo='text',
+            text=f"Bloom→Ouroboros: Pattern recognition and system analysis",
+            mode='lines',
+            showlegend=False
+        )
+        edge_traces.append(edge_trace)
     
-    # Create horizontal connections within layers
-    # Root Layer connections (mesh network)
+    # Create horizontal connections within Root Layer (mesh network)
     for i in range(layers["Root Layer"]["count"]):
         for j in range(i+1, min(i+4, layers["Root Layer"]["count"])):
-            edges_x.extend([nodes_x[i], nodes_x[j], None])
-            edges_y.extend([nodes_y[i], nodes_y[j], None])
-            edge_colors.append("rgba(255, 159, 64, 0.3)")
+            # Create a trace for this Root Layer connection
+            edge_trace = go.Scatter(
+                x=[nodes_x[i], nodes_x[j], None],
+                y=[nodes_y[i], nodes_y[j], None],
+                line=dict(width=1, color='rgba(255, 159, 64, 0.5)'),
+                hoverinfo='text',
+                text=f"Root Layer mesh connection: Local community cooperation",
+                mode='lines',
+                showlegend=False
+            )
+            edge_traces.append(edge_trace)
     
     # Bloom Layer connections
     bloom_start = layers["Root Layer"]["count"]
     bloom_end = bloom_start + layers["Bloom Layer"]["count"]
     for i in range(bloom_start, bloom_end):
         for j in range(i+1, min(i+4, bloom_end)):
-            edges_x.extend([nodes_x[i], nodes_x[j], None])
-            edges_y.extend([nodes_y[i], nodes_y[j], None])
-            edge_colors.append("rgba(75, 192, 192, 0.3)")
+            # Create a trace for this Bloom Layer connection
+            edge_trace = go.Scatter(
+                x=[nodes_x[i], nodes_x[j], None],
+                y=[nodes_y[i], nodes_y[j], None],
+                line=dict(width=1, color='rgba(75, 192, 192, 0.5)'),
+                hoverinfo='text',
+                text=f"Bloom Layer connection: Regional coordination and resource sharing",
+                mode='lines',
+                showlegend=False
+            )
+            edge_traces.append(edge_trace)
     
     # Ouroboros Layer connections (fully connected)
     ouro_start = bloom_end
     ouro_end = ouro_start + layers["Ouroboros Layer"]["count"]
     for i in range(ouro_start, ouro_end):
         for j in range(i+1, ouro_end):
-            edges_x.extend([nodes_x[i], nodes_x[j], None])
-            edges_y.extend([nodes_y[i], nodes_y[j], None])
-            edge_colors.append("rgba(153, 102, 255, 0.3)")
+            # Create a trace for this Ouroboros Layer connection
+            edge_trace = go.Scatter(
+                x=[nodes_x[i], nodes_x[j], None],
+                y=[nodes_y[i], nodes_y[j], None],
+                line=dict(width=1, color='rgba(153, 102, 255, 0.5)'),
+                hoverinfo='text',
+                text=f"Ouroboros Layer connection: System introspection and meta-analysis",
+                mode='lines',
+                showlegend=False
+            )
+            edge_traces.append(edge_trace)
+            
+    # Create legend traces (invisible traces just for the legend)
+    root_legend = go.Scatter(
+        x=[None], y=[None],
+        line=dict(width=1, color='rgba(255, 159, 64, 0.8)'),
+        mode='lines',
+        name="Root Layer Connections",
+        showlegend=True
+    )
+    
+    bloom_legend = go.Scatter(
+        x=[None], y=[None],
+        line=dict(width=1, color='rgba(75, 192, 192, 0.8)'),
+        mode='lines',
+        name="Bloom Layer Connections",
+        showlegend=True
+    )
+    
+    ouroboros_legend = go.Scatter(
+        x=[None], y=[None],
+        line=dict(width=1, color='rgba(153, 102, 255, 0.8)'),
+        mode='lines',
+        name="Ouroboros Layer Connections",
+        showlegend=True
+    )
+    
+    vertical_legend = go.Scatter(
+        x=[None], y=[None],
+        line=dict(width=1.5, color='rgba(150, 150, 150, 0.7)'),
+        mode='lines',
+        name="Cross-Layer Connections",
+        showlegend=True
+    )
     
     # Create the figure
     fig = go.Figure()
     
-    # Add edges
-    fig.add_trace(go.Scatter(
-        x=edges_x, y=edges_y,
-        line=dict(color=edge_colors, width=1),
-        hoverinfo='none',
-        mode='lines'
-    ))
+    # Add all edge traces
+    for trace in edge_traces:
+        fig.add_trace(trace)
+    
+    # Add legend traces
+    fig.add_trace(root_legend)
+    fig.add_trace(bloom_legend)
+    fig.add_trace(ouroboros_legend)
+    fig.add_trace(vertical_legend)
     
     # Add nodes
     fig.add_trace(go.Scatter(
@@ -301,7 +376,9 @@ def create_network_visualization():
             line=dict(width=1, color='rgb(50,50,50)')
         ),
         text=nodes_text,
-        hoverinfo='text'
+        hoverinfo='text',
+        name="Nodes",
+        showlegend=False
     ))
     
     # Add layer labels
@@ -314,15 +391,24 @@ def create_network_visualization():
             font=dict(size=14)
         )
     
-    # Update layout
+    # Update layout with improved legend
     fig.update_layout(
-        showlegend=False,
+        showlegend=True,
         hovermode='closest',
         margin=dict(b=10,l=10,r=10,t=10),
         xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-1.3, 1.1]),
         yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[0.8, 3.2]),
         height=500,
-        plot_bgcolor='rgba(255,255,255,0.8)'
+        plot_bgcolor='rgba(255,255,255,0.8)',
+        legend=dict(
+            yanchor="top",
+            y=0.99,
+            xanchor="left",
+            x=0.01,
+            bgcolor="rgba(255, 255, 255, 0.7)",
+            bordercolor="rgba(0, 0, 0, 0.2)",
+            borderwidth=1
+        )
     )
     
     st.plotly_chart(fig, use_container_width=True)
