@@ -283,15 +283,21 @@ def run_simulation(scenario, speed_factor, viz_placeholder, status_placeholder, 
         use_cases = generate_use_cases(scenario, G, node_status, node_resources, metrics_history)
         st.session_state.use_cases_placeholder.markdown(use_cases)
         
-        # Store simulation results in the database
-        simulation_id = store_simulation_result(
-            scenario=scenario,
-            steps=st.session_state.simulation_step,
-            metrics_history=metrics_history,
-            use_cases_markdown=use_cases
-        )
-        if simulation_id:
-            st.success(f"Simulation results saved to database (ID: {simulation_id}).")
+        # Store simulation results in the database (with error handling)
+        try:
+            simulation_id = store_simulation_result(
+                scenario=scenario,
+                steps=st.session_state.simulation_step,
+                metrics_history=metrics_history,
+                use_cases_markdown=use_cases
+            )
+            if simulation_id:
+                st.success(f"Simulation results saved to database (ID: {simulation_id}).")
+            else:
+                st.warning("Could not save results to database, but simulation completed successfully.")
+        except Exception as e:
+            st.warning(f"Simulation completed successfully, but results could not be saved to database: {str(e)}")
+            # Continue without database saving
 
 
 def initialize_network():

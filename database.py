@@ -59,6 +59,24 @@ def store_simulation_result(scenario, steps, metrics_history, use_cases_markdown
         # Get final metrics
         final_step_idx = len(metrics_history["steps"]) - 1 if metrics_history["steps"] else 0
         
+        # Simplify metrics history to reduce size - just keep every 5th data point
+        simplified_metrics = {
+            "steps": [],
+            "healthy_nodes": [],
+            "total_resources": [],
+            "information_flow": [],
+            "governance_consensus": []
+        }
+        
+        # Sample the metrics data to reduce size
+        for i in range(0, len(metrics_history["steps"]), 5):  # Sample every 5th data point
+            if i < len(metrics_history["steps"]):
+                simplified_metrics["steps"].append(metrics_history["steps"][i])
+                simplified_metrics["healthy_nodes"].append(metrics_history["healthy_nodes"][i])
+                simplified_metrics["total_resources"].append(metrics_history["total_resources"][i])
+                simplified_metrics["information_flow"].append(metrics_history["information_flow"][i])
+                simplified_metrics["governance_consensus"].append(metrics_history["governance_consensus"][i])
+        
         # Create a new record
         simulation_result = SimulationResult(
             scenario_type=scenario,
@@ -67,7 +85,7 @@ def store_simulation_result(scenario, steps, metrics_history, use_cases_markdown
             final_total_resources=metrics_history["total_resources"][final_step_idx] if metrics_history["total_resources"] else 0,
             final_information_flow=metrics_history["information_flow"][final_step_idx] if metrics_history["information_flow"] else 0,
             final_governance_consensus=metrics_history["governance_consensus"][final_step_idx] if metrics_history["governance_consensus"] else 0,
-            metrics_history=metrics_history,
+            metrics_history=simplified_metrics,  # Use the simplified metrics
             use_cases=use_cases_markdown
         )
         
@@ -85,6 +103,9 @@ def store_simulation_result(scenario, steps, metrics_history, use_cases_markdown
     
     except Exception as e:
         st.error(f"Database error: {str(e)}")
+        # Log the full error for debugging
+        import traceback
+        st.error(f"Error details: {traceback.format_exc()}")
         return None
 
 # Get all simulation results
